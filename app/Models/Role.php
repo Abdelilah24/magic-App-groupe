@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class Role extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = 'Rôles & Permissions';
     protected $fillable = ['name', 'label', 'description', 'is_system', 'sort_order'];
 
     protected $casts = ['is_system' => 'boolean'];

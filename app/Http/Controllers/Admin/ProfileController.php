@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\AppSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,10 @@ class ProfileController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        ActivityLog::record('updated', 'Mon profil', 'Mot de passe modifié', [
+            'user' => Auth::user()->name,
+        ]);
+
         return back()->with('success_password', 'Mot de passe mis à jour avec succès.');
     }
 
@@ -64,7 +69,13 @@ class ProfileController extends Controller
             'current_password.current_password'  => 'Le mot de passe actuel est incorrect.',
         ]);
 
+        $oldEmail = $user->email;
         $user->update(['email' => $request->email]);
+
+        ActivityLog::record('updated', 'Mon profil', 'Adresse e-mail modifiée', [
+            'old' => $oldEmail,
+            'new' => $request->email,
+        ]);
 
         return back()->with('success_email', 'Adresse e-mail mise à jour avec succès.');
     }
@@ -110,6 +121,8 @@ class ProfileController extends Controller
         $path = $request->file('logo')->store('logo', 'public');
 
         AppSetting::set(AppSetting::KEY_APP_LOGO, $path);
+
+        ActivityLog::record('updated', 'Mon profil', 'Logo de l\'application mis à jour');
 
         return back()->with('success_logo', 'Logo mis à jour avec succès.');
     }

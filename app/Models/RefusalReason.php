@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class RefusalReason extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = 'Motifs de refus';
     protected $fillable = ['label', 'is_active', 'sort_order'];
 
     protected $casts = [

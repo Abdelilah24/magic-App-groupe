@@ -198,6 +198,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('profile/logo',             [Admin\ProfileController::class, 'updateLogo'])->name('profile.logo');
     Route::delete('profile/logo',          [Admin\ProfileController::class, 'deleteLogo'])->name('profile.logo.delete');
 
+    // ─── Journal des modifications (super_admin uniquement) ─────────────────────
+    Route::middleware(\App\Http\Middleware\EnsurePermission::class . ':super_admin')->group(function () {
+        Route::get('activity-logs',     [Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::delete('activity-logs',  [Admin\ActivityLogController::class, 'destroy'])->name('activity-logs.purge');
+    });
+
     // ─── Gestion des rôles (super_admin uniquement) ──────────────────────────────
     Route::get('roles',                    [Admin\RoleController::class, 'index'])->name('roles.index');
     Route::get('roles/create',             [Admin\RoleController::class, 'create'])->name('roles.create');

@@ -2,7 +2,7 @@
 <html lang="fr" class="h-full bg-slate-50">
 <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>{{ $reservation->reference }}  Magic Hotels</title> <script src="https://cdn.tailwindcss.com"></script> <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"> <meta name="csrf-token" content="{{ csrf_token() }}"> <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="min-h-full" x-data="{ payModal: { show: false, scheduleId: null, amount: 0, label: '' }, cancelModal: false }"> {{-- Header --}}
+<body class="min-h-full" x-data="{ payModal: { show: false, scheduleId: null, amount: 0, label: '' }, cancelModal: false, copyModal: false }"> {{-- Header --}}
 <header class="bg-slate-900 text-white sticky top-0 z-30"> <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between"> <div class="flex items-center gap-4"> <span class="text-amber-400 text-lg font-bold"> Magic Hotels</span> <span class="hidden sm:block text-slate-500 text-sm">|</span> <span class="hidden sm:block text-slate-300 text-sm font-medium">{{ $agency->name }}</span> </div> <div class="flex items-center gap-4"> <a href="{{ route('agency.portal.dashboard') }}"
                class="text-slate-400 hover:text-white text-sm flex items-center gap-1.5"> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/> </svg> Tableau de bord
             </a> </div> </div>
@@ -95,10 +95,10 @@
                         {{-- Bouton Copier et modifier (refus avec suggestion, usage unique) --}}
                         @if($reservation->status === 'refused' && $reservation->refused_with_suggestion)
                             @if(! $reservation->suggestion_copied)
-                            <form action="{{ route('agency.portal.duplicate-reservation', $reservation) }}" method="POST"
-                                  onsubmit="return confirm('Créer une nouvelle demande basée sur {{ $reservation->reference }} ?')">
+                            <form id="copy-reservation-form" action="{{ route('agency.portal.duplicate-reservation', $reservation) }}" method="POST">
                                 @csrf
-                                <button type="submit"
+                                <button type="button"
+                                        @click="copyModal = true"
                                         class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                     Copier et modifier
@@ -463,6 +463,41 @@
                 </button> <button type="submit"
                         class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl"> Soumettre le paiement
                 </button> </div> </form> </div>
+</div>
+
+{{-- Modal Copier et modifier --}}
+<div x-show="copyModal" x-transition
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+     @click.self="copyModal = false"
+     style="display:none;">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm" @click.stop>
+        <div class="px-6 pt-6 pb-4 text-center">
+            <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Copier et modifier ?</h3>
+            <p class="text-sm text-gray-500">
+                Vous allez créer une nouvelle demande basée sur
+                <span class="font-semibold text-gray-800">{{ $reservation->reference }}</span>.
+            </p>
+            <p class="text-xs text-amber-700 mt-3 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-left">
+                La nouvelle demande sera enregistrée en <strong>brouillon</strong>. Vous pourrez la modifier avant de la soumettre.<br>
+                Cette option n'est utilisable <strong>qu'une seule fois</strong>.
+            </p>
+        </div>
+        <div class="px-6 pb-6 flex gap-3">
+            <button type="button" @click="copyModal = false"
+                    class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                Annuler
+            </button>
+            <button type="button" @click="document.getElementById('copy-reservation-form').submit()"
+                    class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition-colors">
+                Confirmer la copie
+            </button>
+        </div>
+    </div>
 </div>
 
 {{-- Modal confirmation annulation --}}

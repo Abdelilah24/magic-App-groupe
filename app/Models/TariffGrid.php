@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TariffGrid extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = 'Grilles tarifaires';
     protected $fillable = [
         'hotel_id', 'name', 'code', 'is_base',
         'base_grid_id', 'operator', 'operator_value',

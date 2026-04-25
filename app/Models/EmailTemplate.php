@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class EmailTemplate extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = "Modèles d'e-mails";
     protected $fillable = [
         'key', 'name', 'description', 'subject', 'html_body', 'placeholders', 'is_active',
     ];

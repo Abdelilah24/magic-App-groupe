@@ -48,8 +48,8 @@ class AgencyPortalController extends Controller
 
         // Stats rapides
         $stats = [
-            'total'        => $reservations->count(),
-            'active'       => $reservations->whereNotIn('status', ['cancelled', 'refused'])->count(),
+            'total'        => $reservations->where('status', '!=', 'draft')->count(),
+            'active'       => $reservations->whereNotIn('status', ['draft', 'cancelled', 'refused'])->count(),
             'pending_pay'  => $reservations->whereIn('status', ['waiting_payment', 'accepted'])->count(),
             'confirmed'    => $reservations->whereIn('status', ['confirmed', 'paid'])->count(),
             'total_paid'   => $reservations->sum(fn ($r) => $r->payments->where('status', 'completed')->sum('amount')),

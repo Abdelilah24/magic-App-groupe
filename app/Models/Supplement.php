@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplement extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
+
+    protected string $activitySection = 'Suppléments';
 
     protected $fillable = [
         'hotel_id', 'title', 'description', 'date_from', 'date_to',
@@ -23,6 +26,13 @@ class Supplement extends Model
         'price_baby'  => 'float',
         'is_active'   => 'boolean',
     ];
+
+    // ─── LogsActivity ─────────────────────────────────────────────────────────
+
+    public function getActivityLabel(): string
+    {
+        return $this->title ?? "#{$this->id}";
+    }
 
     // ─── Relations ────────────────────────────────────────────────────────────
 

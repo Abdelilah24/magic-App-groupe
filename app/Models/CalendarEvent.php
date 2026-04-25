@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class CalendarEvent extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = 'Calendrier';
     protected $fillable = [
         'country', 'type', 'name',
         'start_date', 'end_date', 'year',

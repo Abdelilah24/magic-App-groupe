@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RoomPrice extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected string $activitySection = 'Tableau tarifaire';
 
     protected $fillable = [
         'hotel_id', 'room_type_id', 'occupancy_config_id',
@@ -21,6 +24,16 @@ class RoomPrice extends Model
         'price_per_night' => 'float',
         'is_active'       => 'boolean',
     ];
+
+    // ─── LogsActivity ─────────────────────────────────────────────────────────
+
+    public function getActivityLabel(): string
+    {
+        $from = $this->date_from?->format('d/m/Y') ?? '?';
+        $to   = $this->date_to?->format('d/m/Y')   ?? '?';
+        $lbl  = $this->label ? " ({$this->label})" : '';
+        return "Tarif {$from} → {$to}{$lbl}";
+    }
 
     // ─── Relations ────────────────────────────────────────────────────────────
 

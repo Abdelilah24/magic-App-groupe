@@ -116,15 +116,39 @@
                     </p> @else
                     <span class="text-gray-300 text-xs"></span> @endif
                 </td> {{-- Statut --}}
-                <td class="px-5 py-4 text-center"> <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $statusColors[$res->status] ?? 'bg-gray-100 text-gray-600' }}"> {{ $res->status_label }}
-                    </span> </td> {{-- Actions --}}
+                <td class="px-5 py-4 text-center">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $statusColors[$res->status] ?? 'bg-gray-100 text-gray-600' }}">
+                        {{ $res->status_label }}
+                    </span>
+                    @if($res->status === 'draft')
+                    <p class="text-[10px] text-gray-400 mt-1 leading-tight">Non soumis</p>
+                    @endif
+                    @if($res->status === 'refused' && $res->refused_with_suggestion && ! $res->suggestion_copied)
+                    <p class="text-[10px] text-amber-600 mt-1 font-medium leading-tight">Suggestion disponible</p>
+                    @endif
+                </td> {{-- Actions --}}
                 <td class="px-5 py-4"> <div class="flex items-center gap-1.5 justify-end flex-wrap">
-                        <a href="{{ route('agency.portal.show-reservation', $res) }}"
-                           class="text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors"> <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg> Voir
-                        </a>
-                        @if($canEdit)
+
+                        {{-- Brouillon : bouton "Confirmer et soumettre" prioritaire --}}
+                        @if($res->status === 'draft')
                         <a href="{{ route('agency.portal.edit-reservation', $res) }}"
-                           class="text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors"> <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.772-8.772z"/></svg> Modifier
+                           class="text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors shadow-sm">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Confirmer
+                        </a>
+                        @endif
+
+                        <a href="{{ route('agency.portal.show-reservation', $res) }}"
+                           class="text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Voir
+                        </a>
+
+                        @if($res->status !== 'draft' && $canEdit)
+                        <a href="{{ route('agency.portal.edit-reservation', $res) }}"
+                           class="text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.772-8.772z"/></svg>
+                            Modifier
                         </a>
                         @elseif($blockedBy7)
                         <span title="Modification impossible : arrivée dans {{ $_daysLeft }} jour{{ $_daysLeft > 1 ? 's' : '' }} (délai &lt; 7 j)"
@@ -133,6 +157,27 @@
                             Modif. verrouillée
                         </span>
                         @endif
+
+                        {{-- Refus avec suggestion : bouton "Copier et modifier" (usage unique) --}}
+                        @if($res->status === 'refused' && $res->refused_with_suggestion)
+                            @if(! $res->suggestion_copied)
+                            <form id="copy-form-{{ $res->id }}" action="{{ route('agency.portal.duplicate-reservation', $res) }}" method="POST">
+                                @csrf
+                                <button type="button"
+                                        @click="copyModal = { show: true, ref: '{{ $res->reference }}', formId: 'copy-form-{{ $res->id }}' }"
+                                        class="text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    Copier et modifier
+                                </button>
+                            </form>
+                            @else
+                            <span class="text-xs text-gray-400 italic px-2.5 py-1.5 inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Déjà copié
+                            </span>
+                            @endif
+                        @endif
+
                     </div> </td> </tr> @endforeach
             </tbody> </table> </div> @endif
     </div> {{--  Formulaire de demande  --}}
@@ -269,6 +314,41 @@
                             : 'inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-8 py-3 rounded-xl text-sm transition shadow-sm hover:shadow'"> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Soumettre ma demande
                     </button> </div> </form> </div> </div> @endif
 
+    {{-- Modal Copier et modifier --}}
+    <div x-show="copyModal.show" x-transition
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+         @click.self="copyModal.show = false"
+         style="display:none;">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm" @click.stop>
+            <div class="px-6 pt-6 pb-4 text-center">
+                <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Copier et modifier ?</h3>
+                <p class="text-sm text-gray-500">
+                    Vous allez créer une nouvelle demande basée sur
+                    <span class="font-semibold text-gray-800" x-text="copyModal.ref"></span>.
+                </p>
+                <p class="text-xs text-amber-700 mt-3 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-left">
+                    La nouvelle demande sera enregistrée en <strong>brouillon</strong>. Vous pourrez la modifier avant de la soumettre.<br>
+                    Cette option n'est utilisable <strong>qu'une seule fois</strong>.
+                </p>
+            </div>
+            <div class="px-6 pb-6 flex gap-3">
+                <button type="button" @click="copyModal.show = false"
+                        class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                    Annuler
+                </button>
+                <button type="button" @click="document.getElementById(copyModal.formId).submit()"
+                        class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition-colors">
+                    Confirmer la copie
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="text-center text-xs text-gray-400 pb-4"> © {{ date('Y') }} Magic Hotels  <a href="mailto:{{ config('magic.contact_email') }}" class="text-amber-600 hover:underline">{{ config('magic.contact_email') }}</a> </div> </main> <script>
 // Données par hôtel (injectées côté serveur)
 const roomTypeCapacityByHotel = @json($roomTypeCapacityByHotel);
@@ -295,6 +375,7 @@ const agencyStatusSlug = '{{ $agency->agencyStatus?->slug ?? '' }}';
 function portalReservationForm() {
     return {
         open: false,
+        copyModal: { show: false, ref: '', formId: '' },
         selectedHotelId: '',
         stays: [{
             check_in: '',

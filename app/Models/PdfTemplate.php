@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class PdfTemplate extends Model
 {
+    use LogsActivity;
+
+    protected string $activitySection = 'Modèles PDF';
     protected $fillable = [
         'key', 'name', 'description', 'html_body', 'css', 'placeholders', 'is_active',
     ];

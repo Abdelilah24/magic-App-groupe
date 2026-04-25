@@ -1495,11 +1495,28 @@
             {{-- Refuser --}}
             <div x-data="{
                     open: false,
+                    step: 'type',
+                    refusalType: '',
                     selectedIds: [],
                     customReason: '',
                     get hasOther() {
                         const oid = {{ $otherReasonId ?? 'null' }};
                         return oid !== null && this.selectedIds.includes(String(oid));
+                    },
+                    chooseType(type) {
+                        this.refusalType = type;
+                        this.step = 'reasons';
+                    },
+                    back() {
+                        this.step = 'type';
+                        this.refusalType = '';
+                    },
+                    close() {
+                        this.open = false;
+                        this.step = 'type';
+                        this.refusalType = '';
+                        this.selectedIds = [];
+                        this.customReason = '';
                     },
                     submit(form) {
                         if (this.selectedIds.length === 0) {
@@ -1517,9 +1534,11 @@
                 <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4"
                      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="open = false"></div>
+                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="close()"></div>
                     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg"
                          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+
+                        {{-- En-tête --}}
                         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
@@ -1527,19 +1546,76 @@
                                 </div>
                                 <div>
                                     <h3 class="font-bold text-gray-900">Refuser la réservation</h3>
-                                    <p class="text-xs text-gray-400 mt-0.5">Sélectionnez un ou plusieurs motifs</p>
+                                    <p class="text-xs text-gray-400 mt-0.5"
+                                       x-text="step === 'type' ? 'Choisissez le type de refus' : 'Sélectionnez un ou plusieurs motifs'"></p>
                                 </div>
                             </div>
-                            <button type="button" @click="open = false" class="text-gray-400 hover:text-gray-600">
+                            <button type="button" @click="close()" class="text-gray-400 hover:text-gray-600">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
-                        <form action="{{ route('admin.reservations.refuse', $reservation) }}" method="POST"
+
+                        {{-- Étape 1 : choix du type de refus --}}
+                        <div x-show="step === 'type'" class="px-6 py-6 space-y-3">
+                            {{-- Refus définitif --}}
+                            <button type="button" @click="chooseType('definitive')"
+                                    class="w-full text-left flex items-start gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-red-400 hover:bg-red-50 transition-colors group">
+                                <div class="w-10 h-10 rounded-xl bg-red-100 group-hover:bg-red-200 flex items-center justify-center shrink-0 transition-colors">
+                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-gray-900 text-sm">Refus définitif</p>
+                                    <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">La réservation est refusée sans possibilité de modification. Le client en est informé par e-mail.</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-300 group-hover:text-red-500 shrink-0 self-center transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+
+                            {{-- Refus avec suggestion --}}
+                            <button type="button" @click="chooseType('with_suggestion')"
+                                    class="w-full text-left flex items-start gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-amber-400 hover:bg-amber-50 transition-colors group">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center shrink-0 transition-colors">
+                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-gray-900 text-sm">Refus avec suggestion</p>
+                                    <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">Le client peut copier cette réservation et la modifier pour soumettre une nouvelle demande.</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-300 group-hover:text-amber-500 shrink-0 self-center transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        {{-- Étape 2 : motifs de refus --}}
+                        <form x-show="step === 'reasons'"
+                              action="{{ route('admin.reservations.refuse', $reservation) }}" method="POST"
                               @submit.prevent="submit($el)">
                             @csrf @method('PATCH')
-                            <div class="px-6 py-5">
+                            <input type="hidden" name="refusal_type" :value="refusalType">
+
+                            {{-- Bandeau rappel du type choisi --}}
+                            <div class="mx-6 mt-5 mb-1 rounded-xl px-4 py-2.5 flex items-center gap-3 text-sm font-medium"
+                                 :class="refusalType === 'definitive'
+                                    ? 'bg-red-50 text-red-700 border border-red-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          x-bind:d="refusalType === 'definitive'
+                                            ? 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636'
+                                            : 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'"/>
+                                </svg>
+                                <span x-text="refusalType === 'definitive' ? 'Refus définitif' : 'Refus avec suggestion (le client pourra copier et modifier)'"></span>
+                            </div>
+
+                            <div class="px-6 py-4">
                                 <p class="text-sm font-semibold text-gray-700 mb-3">Motif(s) de refus <span class="text-red-500">*</span></p>
-                                <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                                <div class="space-y-2.5 max-h-52 overflow-y-auto pr-1">
                                     @foreach($refusalReasons as $reason)
                                     <label class="flex items-start gap-3 cursor-pointer group">
                                         <input type="checkbox" name="reason_ids[]" value="{{ $reason->id }}"
@@ -1556,18 +1632,34 @@
                                               class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"></textarea>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-end gap-3 px-6 pb-5 border-t border-gray-100 pt-4">
-                                <button type="button" @click="open = false"
-                                        class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
-                                    Annuler
+                            <div class="flex items-center justify-between gap-3 px-6 pb-5 border-t border-gray-100 pt-4">
+                                <button type="button" @click="back()"
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                    Retour
                                 </button>
-                                <button type="submit"
-                                        class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                                    Confirmer le refus
-                                </button>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="close()"
+                                            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
+                                        Annuler
+                                    </button>
+                                    <button type="submit"
+                                            :class="refusalType === 'definitive'
+                                                ? 'bg-red-600 hover:bg-red-700'
+                                                : 'bg-amber-500 hover:bg-amber-600'"
+                                            class="inline-flex items-center gap-2 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors shadow-sm">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  x-bind:d="refusalType === 'definitive'
+                                                    ? 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636'
+                                                    : 'M5 13l4 4L19 7'"/>
+                                        </svg>
+                                        <span x-text="refusalType === 'definitive' ? 'Confirmer le refus' : 'Confirmer'"></span>
+                                    </button>
+                                </div>
                             </div>
                         </form>
+
                     </div>
                 </div>
             </div> </div> @endif

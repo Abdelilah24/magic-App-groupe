@@ -253,6 +253,21 @@
             @endif
             @endif
 
+            @if($_u->isSuperAdmin())
+            {{-- ── JOURNAL ──────────────────────────────────────────────── --}}
+            <div class="pt-5 pb-1">
+                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Journal</p>
+            </div>
+            <a href="{{ route('admin.activity-logs.index') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('admin.activity-logs*') ? 'bg-amber-500 text-white' : 'text-slate-300 hover:bg-slate-800' }}">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6m-3-3v6"/>
+                </svg>
+                Journal des modifications
+            </a>
+            @endif
+
         </nav>
         {{-- ── Zone utilisateur ─────────────────────────────────────── --}}
         <div class="px-4 py-4 border-t border-slate-700 space-y-1">
